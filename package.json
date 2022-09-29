@@ -1,0 +1,21 @@
+{
+  "name": "frontbase-formulas-server",
+  "version": "0.0.1",
+  "description": "Package that can compile formulas",
+  "main": "dist/index.js",
+  "types": "dist/Types.js",
+  "repository": "https://github.com/FrontBase-io/formulas-server",
+  "author": "Vic van Cooten",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^14.14.7",
+    "appbox-types": "^0.0.3",
+    "typescript": "^4.0.5"
+  },
+  "dependencies": {
+    "date-fns": "^2.25.0",
+    "lodash": "^4.17.20",
+    "uniqid": "^5.2.0"
+  }
+}
