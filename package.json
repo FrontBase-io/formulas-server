@@ -1,6 +1,6 @@
 {
   "name": "frontbase-formulas-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Package that can compile formulas",
   "main": "dist/index.js",
   "types": "dist/Types.js",
@@ -16,6 +16,6 @@
   "dependencies": {
     "date-fns": "^2.25.0",
     "lodash": "^4.17.20",
-    "uniqid": "^5.2.0"
+    "uniqid": "^5.4.0"
   }
 }
