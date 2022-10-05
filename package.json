@@ -1,6 +1,6 @@
 {
   "name": "frontbase-formulas-server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Package that can compile formulas",
   "main": "dist/index.js",
   "types": "dist/Types.js",

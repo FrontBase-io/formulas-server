@@ -1,6 +1,8 @@
 import { parseFormulaString } from './formula'
 import { ModelType } from './Types/Models'
 import { ObjectType } from './Types/Object'
+import asyncMap from './helpers/asyncMap'
+import { ObjectId } from 'mongodb'
 
 class Formula {
   // The original formula in form of {{ first_name }}
@@ -23,6 +25,8 @@ class Formula {
   // A convenience map of all models
   modelMap: { [key: string]: ModelType } = {}
   isInstant
+  // db
+  db
 
   // Initialise the formula
   // By initialising we create a class that makes it easy to compile the formula into data.
@@ -30,11 +34,13 @@ class Formula {
     _formula: string,
     _label: string,
     startingModel: string,
-    _modelMap
+    _modelMap,
+    _db
   ) {
     this.formula = _formula
     this.label = _label
     this.modelMap = _modelMap
+    this.db = _db
 
     // Parse the formula structure
     this.onReady = new Promise<void>(async (resolve) => {
@@ -64,10 +70,33 @@ class Formula {
       Promise.all(
         Object.keys(this.elements).map(
           (elementId) =>
-            new Promise<void>((resolve) => {
+            new Promise<void>(async (resolve) => {
               const element = this.elements[elementId]
 
-              result = result.replace(`___${elementId}`, object[element])
+              // Process the element
+              if (element.match('\\(')) {
+                // This element contains a function
+                console.log('Todo: parse functions')
+              } else if (element.match('\\.')) {
+                // This element contains relationships
+                let nextObject = object
+                await asyncMap(element.split('.'), async (part) => {
+                  if (part.match('__r')) {
+                    // Regular part
+                    // Find the next object
+                    nextObject = await this.db.collection('Objects').findOne({
+                      _id: new ObjectId(nextObject[part.replace('__r', '')]),
+                    })
+                  } else {
+                    // Final part
+                    // The result is the final part of the next object
+                    result = result.replace(`___${elementId}`, nextObject[part])
+                  }
+                })
+              } else {
+                // Normal element
+                result = result.replace(`___${elementId}`, object[element])
+              }
 
               resolve()
             })
