@@ -1,8 +1,9 @@
 import { parseFormulaString } from './formula'
 import { ModelType } from './Types/Models'
-import { ObjectType } from './Types/Object'
+import { NewObjectType, ObjectType } from './Types/Object'
 import asyncMap from './helpers/asyncMap'
 import { ObjectId } from 'mongodb'
+import functions from './Functions'
 
 class Formula {
   // The original formula in form of {{ first_name }}
@@ -22,6 +23,8 @@ class Formula {
     local: boolean
     parents?: { model: string; field: string }[]
   }[]
+  // Global triggers
+  globals: string[]
   // A convenience map of all models
   modelMap: { [key: string]: ModelType } = {}
   isInstant
@@ -44,13 +47,14 @@ class Formula {
 
     // Parse the formula structure
     this.onReady = new Promise<void>(async (resolve) => {
-      const { dependencies, parsable, elements, isInstant } =
+      const { dependencies, parsable, elements, isInstant, globals } =
         await parseFormulaString(this, startingModel)
 
       console.log(`🧪 Compiled formula ${this.label}`)
 
       this.dependencies = dependencies
       this.parsable = parsable
+      this.globals = globals
       this.elements = elements
       this.isInstant = isInstant
       resolve()
@@ -74,9 +78,21 @@ class Formula {
               const element = this.elements[elementId]
 
               // Process the element
-              if (element.match('\\(')) {
+              if (element.match(/\w*\(.+\)/)) {
                 // This element contains a function
-                console.log('Todo: parse functions')
+                const func = new RegExp(/(?<fName>\w*)\((?<fArgs>.*)\)/gm).exec(
+                  element
+                )
+                const fName = func.groups.fName
+                const fArgs = func.groups.fArgs.split(', ')
+                const F = functions[fName]
+                const f = new F()
+
+                // Calculate and replace the formula element
+                result = result.replace(
+                  `___${elementId}`,
+                  await f.execute(this.getVariables(fArgs, object))
+                )
               } else if (element.match('\\.')) {
                 // This element contains relationships
                 let nextObject = object
@@ -124,6 +140,16 @@ class Formula {
         Math.random() * 100
       )}`
       resolve(result)
+    })
+  }
+
+  getVariables(args: string[], object) {
+    return args.map((a) => {
+      if (['__TODAY'].includes(a)) {
+        return new Date()
+      } else {
+        return object[a]
+      }
     })
   }
 }
